@@ -20,9 +20,10 @@ import timber.log.Timber;
 
 public class PokemonRecycleViewAdapter extends RecyclerView.Adapter<PokemonRecycleViewAdapter.ViewHolder> {
     private final List<Pokemon> mValues;
-
-    PokemonRecycleViewAdapter(List<Pokemon> items){
+    private final   MainFragment.OnPokemonSelected mListener;
+    PokemonRecycleViewAdapter(List<Pokemon> items,  MainFragment.OnPokemonSelected listener){
         this.mValues=items;
+        this.mListener=listener;
     }
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -55,7 +56,14 @@ public class PokemonRecycleViewAdapter extends RecyclerView.Adapter<PokemonRecyc
         void bind(Pokemon pokemon) {
             mPokemon=pokemon;
             pokemonName.setText(pokemon.getName());
-
+            mView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if(mListener!=null){
+                        mListener.onDefaultPokemon(pokemon);
+                    }
+                }
+            });
         }
     }
 }

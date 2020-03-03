@@ -8,6 +8,7 @@ import com.aim.myapplication.models.pokemon.PokemonLocalRepo;
 import com.aim.myapplication.models.pokemon.PokemonRemoteRepo;
 import com.aim.myapplication.models.pokemon.PokemonRepo;
 
+import java.sql.Time;
 import java.util.ArrayList;
 
 import androidx.annotation.NonNull;
@@ -19,8 +20,8 @@ import io.reactivex.schedulers.Schedulers;
 import timber.log.Timber;
 
 public class PokemonViewModel extends AndroidViewModel {
-    int limit 30
-    public MutableLiveData<ArrayList<Pokemon>> pokemones;
+    int limit= 30;
+    public MutableLiveData<ArrayList<Pokemon>> pokemonList;
     public enum ViewState {
         FETCHING_POKEMON("FETCHING_POKEMON"),
         FETCHING_POKEMON_LIST("FETCHING_POKEMON_LIST"),
@@ -54,8 +55,20 @@ public class PokemonViewModel extends AndroidViewModel {
         PokemonLocalRepo localRepo = new PokemonLocalRepo(application);
         pokemonRepo = new PokemonRepo(remoteRepo,localRepo);
         disposables = new CompositeDisposable();
-        pokemones = new MutableLiveData<>();
-        pokemones.setValue(new ArrayList<>());
+        pokemonList = new MutableLiveData<>();
+        pokemonList.setValue(new ArrayList<>());
+        disposables.add(this.getPokemonList().observeOn(Schedulers.io()).subscribe(this::pokemonUpdated, this::errorObtainingPokemon));
+    }
+
+    private void errorObtainingPokemon(Throwable throwable) {
+    }
+    public void updateCurrentPokemon(Pokemon pokemon){
+
+    }
+
+    private void pokemonUpdated(PokemonListResponse pokemonListResponse) {
+        //ArrayList<Pokemon> pokemonList=pokemonListResponse.getResults();
+        //this.pokemonList.postValue(pokemonList);
     }
 
     public Observable<Pokemon> fetchPokemon(int pokemonId){
@@ -66,22 +79,22 @@ public class PokemonViewModel extends AndroidViewModel {
         currentViewStatus.postValue(ViewState.FETCHING_POKEMON);
         return pokemonRepo.getPokemon(pokemonName).observeOn(Schedulers.io()).doOnNext(pokemon -> currentPokemon.postValue(pokemon));
     }
-
-    Observable<PokemonListResponse> getPokemonList(){
+    public void loadMore(){
+        disposables.add(this.getPokemonList().observeOn(Schedulers.io()).subscribe(this::pokemonUpdated, this::errorObtainingPokemon));
+    }
+   private Observable<PokemonListResponse> getPokemonList(){
         currentViewStatus.postValue(ViewState.FETCHING_POKEMON_LIST);
-        return pokemonRepo.getPokemonList(limit, pokeLiveData.getValue().size()).doOnError(throwable -> {
+        int currentTotal=pokemonList.getValue().size();
+        Timber.d("OFFSET: "+currentTotal+" LIMIT: "+limit);
+        return pokemonRepo.getPokemonList(limit, pokemonList.getValue().size()).doOnError(throwable -> {
             Timber.e(throwable);
             currentViewStatus.postValue(ViewState.ERROR_FETCHING_POKEMON_LIST);
         }).doOnNext((pokemonListResponse -> {
-
-             ArrayList<Pokemon> pokemons=  pokemonListResponse.getResults();
-            pokemonRepo.savePokemon(pokemons);
-            ArrayList<Pokemon> currentList = pokemones.getValue();
-            if (currentList != null) {
-                currentList.addAll(pokemons);
-                pokemones.postValue(currentList);
-            }
-
+             ArrayList<Pokemon> newPokemons=  pokemonListResponse.getResults();
+            pokemonRepo.savePokemon(newPokemons);
+            ArrayList<Pokemon> currentList = pokemonList.getValue();
+            currentList.addAll(newPokemons);
+            pokemonList.postValue(currentList);
             currentViewStatus.postValue(ViewState.POKEMON_LIST_OBTAINED);
 
         }));

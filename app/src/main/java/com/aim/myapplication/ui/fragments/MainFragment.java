@@ -6,6 +6,9 @@ import androidx.lifecycle.ViewModelProviders;
 
 import android.os.Bundle;
 
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -27,18 +30,24 @@ import com.aim.myapplication.R;
 import com.aim.myapplication.models.pokemon.Pokemon;
 import com.aim.myapplication.models.pokemon.PokemonListResponse;
 import com.aim.myapplication.ui.MainViewModel;
+import com.aim.myapplication.utils.EndlessRecyclerViewScrollListener;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
 
 public class MainFragment extends Fragment {
+    private OnPokemonSelected mListener;
 
     private MainViewModel mViewModel;
     private PokemonViewModel pokemonViewModel;
     private ProgressBar pb;
     private RecyclerView rvPokemon;
+    private LinearLayoutManager mLayoutManager;
+    int yPosition;
+    int firstVisibleItem, visibleItemCount, totalItemCount;
+    private int visibleThreshold = 5;
     private CompositeDisposable disposables = new CompositeDisposable();
-
+    private EndlessRecyclerViewScrollListener scrollListener;
     public static MainFragment newInstance() {
         return new MainFragment();
     }
@@ -50,17 +59,64 @@ public class MainFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View view=inflater.inflate(R.layout.main_fragment, container, false);
         // TODO: Use the ViewModel
-        rvPokemon=  view.findViewById(R.id.pokermon_recycler_view);
         pb= view.findViewById(R.id.pokemon_pb);
-        rvPokemon.setLayoutManager(new LinearLayoutManager(requireContext()));
-        rvPokemon.setAdapter(new PokemonRecycleViewAdapter(new ArrayList<>()));
+        mLayoutManager= new LinearLayoutManager(requireContext());
+        rvPokemon=  view.findViewById(R.id.pokermon_recycler_view);
+        rvPokemon.setLayoutManager(mLayoutManager);
+        mListener= new OnPokemonSelected() {
+            @Override
+            public void onDefaultPokemon(Pokemon pokemon) {
+                NavController navController =   Navigation.findNavController(view);
+                navController.
+            }
+
+            @Override
+            public void onPokemonSelectionDone() {
+
+            }
+        };
+        rvPokemon.setAdapter(new PokemonRecycleViewAdapter(new ArrayList<>(),mListener));
+        initScrollListener();
         this.pokemonName= view.findViewById(R.id.pokemon_name_text_view);
+        yPosition=0;
 
         //pokemonViewModel.fetchPokemon(21).observeOn(AndroidSchedulers.mainThread()).subscribe(this::setPokemonData);
         return view;
 
 
     }
+
+    private void initScrollListener() {
+        this.rvPokemon.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+            }
+
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                visibleItemCount = recyclerView.getChildCount();
+                totalItemCount = mLayoutManager.getItemCount();
+                firstVisibleItem = mLayoutManager.findLastCompletelyVisibleItemPosition();
+                /*if(dy>0){
+                    if(!recyclerView.canScrollVertically(1)){
+                        Timber.tag("SCROLL ").d("LLEGO AL FONO");
+                        pokemonViewModel.loadMore();
+
+
+                    }
+                }*/
+                if((totalItemCount - visibleItemCount)
+                        <= (firstVisibleItem + visibleThreshold)) {
+                    // End has been reached
+                    Timber.tag("SCROLL ").d("LLEGO AL FONO");
+                    // Do something
+                }
+            }
+        });
+    }
+
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
@@ -74,17 +130,14 @@ public class MainFragment extends Fragment {
                 });
         pb.setVisibility(View.VISIBLE);
         pokemonViewModel= new ViewModelProvider(requireActivity()).get(PokemonViewModel.class);
-        disposables.add(pokemonViewModel.getPokemonList().observeOn(AndroidSchedulers.mainThread()).subscribe(this::pokemonObtained));
-
+        pokemonViewModel.pokemonList.observe(getViewLifecycleOwner(),this::pokemonObtained);
 
     }
 
-    private void pokemonObtained(PokemonListResponse pokemonListResponse) {
-        Timber.d("TOTAL POKEMONS" +pokemonListResponse.getCount() + "");
-        ArrayList<Pokemon> pokemon= pokemonListResponse.getResults();
-        String list=  pokemon.toString();
-        Timber.d("POKEMONS LIST" +list + "");
-        rvPokemon.setAdapter(new PokemonRecycleViewAdapter(pokemon));
+    private void pokemonObtained(ArrayList<Pokemon> pokemons) {
+        this.yPosition=rvPokemon.getScrollY();
+        rvPokemon.setAdapter(new PokemonRecycleViewAdapter(pokemons,mListener));
+        rvPokemon.scrollToPosition(yPosition);
         pb.setVisibility(View.INVISIBLE);
     }
 
@@ -97,6 +150,12 @@ public class MainFragment extends Fragment {
         String name=pokemon.getName();
         this.pokemonName.setText(name);
         Timber.tag("PKMN").d("pokemon name is %s",pokemon.getName());
+    }
+
+    public  interface OnPokemonSelected{
+        void onDefaultPokemon(Pokemon pokemon);
+
+        void onPokemonSelectionDone();
     }
 
 }
