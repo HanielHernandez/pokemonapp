@@ -12,6 +12,7 @@ import timber.log.Timber;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.aim.myapplication.R;
 import com.aim.myapplication.models.pokemon.Pokemon;
@@ -20,18 +21,25 @@ public class PokemonDetail extends Fragment {
 
     private static Pokemon mPokemon;
     private PokemonDetailViewModel mViewModel;
-    public static PokemonDetail newInstance(
-            Pokemon pokemon
+    private TextView tfName;
+    private TextView tfHeight;
+    private TextView tfWeight;
+    public  PokemonDetail newInstance(
+
     ) {
-        mPokemon=pokemon;
+
         return new PokemonDetail();
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.pokemon_detail_fragment, container, false);
-        Timber.d(this.mPokemon.getName());
+        View view = inflater.inflate(R.layout.pokemon_detail_fragment, container, false);
+        //Timber.d(this.mPokemon.getName());
+        tfName = view.findViewById(R.id.pokemon_name);
+        tfHeight = view.findViewById(R.id.pokemon_height);
+        tfWeight = view.findViewById(R.id.pokemon_weight);
+        return  view;
     }
 
     @Override
@@ -40,5 +48,9 @@ public class PokemonDetail extends Fragment {
         mViewModel = ViewModelProviders.of(this).get(PokemonDetailViewModel.class);
         // TODO: Use the ViewModel
     }
-
+    public  void setData(){
+        this.tfName.setText(mPokemon.getName());
+        this.tfHeight.setText(mPokemon.getHeight().toString());
+        this.tfWeight.setText(mPokemon.getWeight().toString());
+    }
 }

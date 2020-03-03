@@ -3,11 +3,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/pokemon_detail_fragment"
     tools:context="com.aim.myapplication.ui.fragments.PokemonDetail">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="Hello" />
+        android:id="@+id/pokemon_name"
+        android:text="@string/pokemon_name" />
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/pokemon_height"
+        android:text="@string/pokemon_height" />
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/pokemon_weight"
+        android:text="@string/pokemon_weight" />
 
 </FrameLayout>

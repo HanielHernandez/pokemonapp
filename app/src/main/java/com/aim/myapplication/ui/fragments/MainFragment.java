@@ -66,8 +66,7 @@ public class MainFragment extends Fragment {
         mListener= new OnPokemonSelected() {
             @Override
             public void onDefaultPokemon(Pokemon pokemon) {
-                NavController navController =   Navigation.findNavController(view);
-                navController.
+                Navigation.findNavController(view).navigate(R.id.pokemon_detail_fragment);
             }
 
             @Override

@@ -1,5 +1,9 @@
 <resources>
     <string name="app_name">My Application</string>
     <string name="place_holder">Lore Ipsum</string>
+    <string name="pokemon_name">Pokemon Name</string>
+    <string name="pokemon_height">Pokemon Height</string>
+    <string name="pokemon_weight">Pokemon Weight</string>
+
 
 </resources>
