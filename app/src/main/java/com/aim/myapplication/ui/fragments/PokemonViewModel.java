@@ -19,6 +19,8 @@ import io.reactivex.schedulers.Schedulers;
 import timber.log.Timber;
 
 public class PokemonViewModel extends AndroidViewModel {
+    int limit 30
+    public MutableLiveData<ArrayList<Pokemon>> pokemones;
     public enum ViewState {
         FETCHING_POKEMON("FETCHING_POKEMON"),
         FETCHING_POKEMON_LIST("FETCHING_POKEMON_LIST"),
@@ -52,6 +54,8 @@ public class PokemonViewModel extends AndroidViewModel {
         PokemonLocalRepo localRepo = new PokemonLocalRepo(application);
         pokemonRepo = new PokemonRepo(remoteRepo,localRepo);
         disposables = new CompositeDisposable();
+        pokemones = new MutableLiveData<>();
+        pokemones.setValue(new ArrayList<>());
     }
 
     public Observable<Pokemon> fetchPokemon(int pokemonId){
@@ -63,15 +67,23 @@ public class PokemonViewModel extends AndroidViewModel {
         return pokemonRepo.getPokemon(pokemonName).observeOn(Schedulers.io()).doOnNext(pokemon -> currentPokemon.postValue(pokemon));
     }
 
-    Observable<PokemonListResponse> getPokemonList(int limit, int offset){
+    Observable<PokemonListResponse> getPokemonList(){
         currentViewStatus.postValue(ViewState.FETCHING_POKEMON_LIST);
-        return pokemonRepo.getPokemonList(limit,offset).doOnError(throwable -> {
+        return pokemonRepo.getPokemonList(limit, pokeLiveData.getValue().size()).doOnError(throwable -> {
             Timber.e(throwable);
             currentViewStatus.postValue(ViewState.ERROR_FETCHING_POKEMON_LIST);
         }).doOnNext((pokemonListResponse -> {
+
              ArrayList<Pokemon> pokemons=  pokemonListResponse.getResults();
             pokemonRepo.savePokemon(pokemons);
+            ArrayList<Pokemon> currentList = pokemones.getValue();
+            if (currentList != null) {
+                currentList.addAll(pokemons);
+                pokemones.postValue(currentList);
+            }
+
             currentViewStatus.postValue(ViewState.POKEMON_LIST_OBTAINED);
+
         }));
     }
 

@@ -74,7 +74,7 @@ public class MainFragment extends Fragment {
                 });
         pb.setVisibility(View.VISIBLE);
         pokemonViewModel= new ViewModelProvider(requireActivity()).get(PokemonViewModel.class);
-        disposables.add(pokemonViewModel.getPokemonList(150,0).observeOn(AndroidSchedulers.mainThread()).subscribe(this::pokemonObtained));
+        disposables.add(pokemonViewModel.getPokemonList().observeOn(AndroidSchedulers.mainThread()).subscribe(this::pokemonObtained));
 
 
     }
